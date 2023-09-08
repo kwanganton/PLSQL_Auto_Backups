@@ -60,7 +60,7 @@ create table plsql_history (
         and    name = l_name
         and    type = l_type;
  
-   --    logger('Archived '||l_type||'-'||l_owner||'.'||l_name);
+       logger('Archived '||l_type||'-'||l_owner||'.'||l_name);
  
         select max(case when tot > versions_kept and seq = tot - versions_kept then tstamp end)
        into   l_tstamp_to_clear

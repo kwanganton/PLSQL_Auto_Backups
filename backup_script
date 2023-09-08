@@ -34,6 +34,12 @@ create table plsql_history (
   ,MSG        varchar2(1000));
 
 
+/** Grant priviledge to User  **/
+   GRANT SELECT ON dba_source TO XXX;
+
+
+/** Create Trigger **/
+
   create or replace trigger plsql_trigger
   before create on SCHEMA
   declare

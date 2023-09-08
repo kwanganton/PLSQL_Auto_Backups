@@ -56,7 +56,7 @@ create table plsql_history (
  commit;
  end;
  begin
- if l_type in ('FUNCTION','PROCEDURE','PACKAGE','PACKAGE BODY') then
+ if l_type in ('FUNCTION','PROCEDURE','PACKAGE','PACKAGE BODY','TRIGGER') then
  insert into plsql_history values (l_archived, l_owner, l_name, l_type);
  
  insert into plsql_history_source

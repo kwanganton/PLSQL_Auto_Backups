@@ -1,0 +1,97 @@
+CREATE OR REPLACE PROCEDURE PLSQL_HISTORY_RESTORE 
+(
+  IN_VERSION IN NUMBER 
+, IN_OWNER IN VARCHAR2 
+, IN_TYPE IN VARCHAR2 
+, IN_NAME IN VARCHAR2 
+) AS 
+
+v_start varchar2(50);
+v_clob clob;  
+v_version TIMESTAMP(6);
+
+
+
+BEGIN
+
+select tstamp into v_version
+from (select distinct tstamp from plsql_history_source
+
+where type=IN_TYPE
+                  and name =IN_NAME
+                  and owner =IN_OWNER)
+where rownum =IN_VERSION;
+
+
+
+begin
+ v_start:='Create or Replace ';
+ 
+  for rec in (
+          select 
+          *
+          from (
+               select ph.*,
+                        row_number() over ( order by ph.tstamp ) as seq,
+                        count(*) over () as tot
+                 from plsql_history ph 
+                  where type=IN_TYPE
+                  and name =IN_NAME
+                  and owner =IN_OWNER
+                  and tstamp=v_version) v
+                   join plsql_history_source s on
+                v.tstamp =s.tstamp
+                 and
+                 v.name =  s.name
+                 and v.owner =  s.owner
+                  and v.type = s.type
+                  order by seq ,line )
+       
+  loop
+  
+  /**Fix Object Name **/
+  IF rec.line = 1 then
+  select
+  
+  Case 
+  when  instr(upper(upper(rec.text),'PROCEDURE'))>0 then   
+  replace(regexp_substr( upper(rec.text), 'PROCEDURE[[:space:]]*([[:alpha:]_]+)', 1, 1, NULL, 1),
+  regexp_substr( upper(rec.text), 'PROCEDURE[[:space:]]*([[:alpha:]_]+)', 1, 1, NULL, 1)||'_RESTORED')
+  
+  when  instr(upper(upper(rec.text),'FUNCTION'))>0 then   
+  replace(regexp_substr( upper(rec.text), 'FUNCTION[[:space:]]*([[:alpha:]_]+)', 1, 1, NULL, 1),
+  regexp_substr( upper(rec.text), 'FUNCTION[[:space:]]*([[:alpha:]_]+)', 1, 1, NULL, 1)||'_RESTORED')
+  
+    when  instr(upper(upper(rec.text),'PACKAGE'))>0 then   
+  replace(regexp_substr( upper(rec.text), 'PACKAGE[[:space:]]*([[:alpha:]_]+)', 1, 1, NULL, 1),
+  regexp_substr( upper(rec.text), 'PACKAGE[[:space:]]*([[:alpha:]_]+)', 1, 1, NULL, 1)||'_RESTORED')
+  
+    when  instr(upper(upper(rec.text),'PACKAGE BODY'))>0 then   
+  replace(regexp_substr( upper(rec.text), 'PACKAGE BODY[[:space:]]*([[:alpha:]_]+)', 1, 1, NULL, 1),
+  regexp_substr( upper(rec.text), 'PACKAGE BODY[[:space:]]*([[:alpha:]_]+)', 1, 1, NULL, 1)||'_RESTORED')
+  
+    when  instr(upper(upper(rec.text),'TRIGGER'))>0 then   
+  replace(regexp_substr( upper(rec.text), 'TRIGGER[[:space:]]*([[:alpha:]_]+)', 1, 1, NULL, 1),
+  regexp_substr( upper(rec.text), 'TRIGGER[[:space:]]*([[:alpha:]_]+)', 1, 1, NULL, 1)||'_RESTORED')
+  
+  
+  
+  End
+  into
+  rec.text from dual;
+  End If;
+
+/**Append to Clob **/
+
+  
+      v_clob := v_clob || CHR(10) || rec.text;  
+   
+  end loop;
+ v_clob:= v_start||v_clob;
+
+execute immediate v_clob;
+
+End;
+
+
+END PLSQL_HISTORY_RESTORE;

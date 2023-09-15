@@ -50,38 +50,6 @@ begin
        
   loop
   
-  /**Fix Object Name **/
-  IF rec.line = 0 then
-  
-  select
-  Case 
-  when  instr( upper(rec.text),'PROCEDURE') > 0 then
-  
-  replace(regexp_substr( upper(rec.text), 'PROCEDURE[[:space:]]*([[:alpha:]_]+)', 1, 1, NULL, 1),
-  regexp_substr( upper(rec.text), 'PROCEDURE[[:space:]]*([[:alpha:]_]+)', 1, 1, NULL, 1)||'_RESTORED')
-  
-  when  instr(upper(rec.text),'FUNCTION')>0 then   
-  replace(regexp_substr( upper(rec.text), 'FUNCTION[[:space:]]*([[:alpha:]_]+)', 1, 1, NULL, 1),
-  regexp_substr( upper(rec.text), 'FUNCTION[[:space:]]*([[:alpha:]_]+)', 1, 1, NULL, 1)||'_RESTORED')
-  
-    when  instr(upper(rec.text),'PACKAGE')>0 then   
-  replace(regexp_substr( upper(rec.text), 'PACKAGE[[:space:]]*([[:alpha:]_]+)', 1, 1, NULL, 1),
-  regexp_substr( upper(rec.text), 'PACKAGE[[:space:]]*([[:alpha:]_]+)', 1, 1, NULL, 1)||'_RESTORED')
-  
-    when  instr(upper(rec.text),'PACKAGE BODY')>0 then   
-  replace(regexp_substr( upper(rec.text), 'PACKAGE BODY[[:space:]]*([[:alpha:]_]+)', 1, 1, NULL, 1),
-  regexp_substr( upper(rec.text), 'PACKAGE BODY[[:space:]]*([[:alpha:]_]+)', 1, 1, NULL, 1)||'_RESTORED')
-  
-    when  instr(upper(rec.text),'TRIGGER')>0 then   
-  replace(regexp_substr( upper(rec.text), 'TRIGGER[[:space:]]*([[:alpha:]_]+)', 1, 1, NULL, 1),
-  regexp_substr( upper(rec.text), 'TRIGGER[[:space:]]*([[:alpha:]_]+)', 1, 1, NULL, 1)||'_RESTORED')
-  
-  End
-  into
-  rec.text 
-  from dual;
-  End If;
-
 /**Append to Clob **/
 
   
@@ -99,5 +67,18 @@ end;
 
 End;
 
+
+/** HOW TO USE **/
+
+---set serveroutput on;
+---begin
+
+---PLSQL_HISTORY_RESTORE 
+---(
+---  IN_VERSION =>2
+---, IN_OWNER =>'MCC_PROD'
+---, IN_TYPE =>'FUNCTION'
+---, IN_NAME =>'F_DBA_OBJECT');
+---end;
 
 END PLSQL_HISTORY_RESTORE;

@@ -1,0 +1,33 @@
+create or replace
+function f_dba_object(
+IN_OWNER in varchar2,
+IN_TYPE Varchar2,
+IN_NAME in Varchar2
+)
+return clob
+is
+  v_start varchar2(50);
+  v_clob clob;  
+begin
+ v_start:='Create or Replace'||CHR(10);
+ 
+  for rec in (
+      select text 
+       from   dba_source
+      where 
+      owner = IN_OWNER
+      and type=IN_TYPE
+      and name =IN_NAME
+      order by line asc)
+  loop
+
+      v_clob := v_clob || CHR(10) || rec.text;  
+   
+  end loop;
+ v_clob:= v_start||v_clob;
+return (v_clob);
+end  f_dba_object;
+
+/** How to Use **/
+
+--  select f_dba_object(IN_OWNER => 'ANTON',IN_TYPE =>'TRIGGER',IN_NAME=>'ACCOUNTING_PERIOD_TRG')from dual;

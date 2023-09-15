@@ -13,14 +13,15 @@ v_version TIMESTAMP(6);
 
 
 BEGIN
-
-select tstamp into v_version
+select tstamp  into v_version
+from (
+select to_char(rownum) as version,tstamp
 from (select distinct tstamp from plsql_history_source
 
 where type=IN_TYPE
                   and name =IN_NAME
-                  and owner =IN_OWNER)
-where rownum =IN_VERSION;
+                  and owner =IN_OWNER))
+where version =IN_VERSION;
 
 
 
@@ -50,35 +51,35 @@ begin
   loop
   
   /**Fix Object Name **/
-  IF rec.line = 1 then
-  select
+  IF rec.line = 0 then
   
+  select
   Case 
-  when  instr(upper(upper(rec.text),'PROCEDURE'))>0 then   
+  when  instr( upper(rec.text),'PROCEDURE') > 0 then
+  
   replace(regexp_substr( upper(rec.text), 'PROCEDURE[[:space:]]*([[:alpha:]_]+)', 1, 1, NULL, 1),
   regexp_substr( upper(rec.text), 'PROCEDURE[[:space:]]*([[:alpha:]_]+)', 1, 1, NULL, 1)||'_RESTORED')
   
-  when  instr(upper(upper(rec.text),'FUNCTION'))>0 then   
+  when  instr(upper(rec.text),'FUNCTION')>0 then   
   replace(regexp_substr( upper(rec.text), 'FUNCTION[[:space:]]*([[:alpha:]_]+)', 1, 1, NULL, 1),
   regexp_substr( upper(rec.text), 'FUNCTION[[:space:]]*([[:alpha:]_]+)', 1, 1, NULL, 1)||'_RESTORED')
   
-    when  instr(upper(upper(rec.text),'PACKAGE'))>0 then   
+    when  instr(upper(rec.text),'PACKAGE')>0 then   
   replace(regexp_substr( upper(rec.text), 'PACKAGE[[:space:]]*([[:alpha:]_]+)', 1, 1, NULL, 1),
   regexp_substr( upper(rec.text), 'PACKAGE[[:space:]]*([[:alpha:]_]+)', 1, 1, NULL, 1)||'_RESTORED')
   
-    when  instr(upper(upper(rec.text),'PACKAGE BODY'))>0 then   
+    when  instr(upper(rec.text),'PACKAGE BODY')>0 then   
   replace(regexp_substr( upper(rec.text), 'PACKAGE BODY[[:space:]]*([[:alpha:]_]+)', 1, 1, NULL, 1),
   regexp_substr( upper(rec.text), 'PACKAGE BODY[[:space:]]*([[:alpha:]_]+)', 1, 1, NULL, 1)||'_RESTORED')
   
-    when  instr(upper(upper(rec.text),'TRIGGER'))>0 then   
+    when  instr(upper(rec.text),'TRIGGER')>0 then   
   replace(regexp_substr( upper(rec.text), 'TRIGGER[[:space:]]*([[:alpha:]_]+)', 1, 1, NULL, 1),
   regexp_substr( upper(rec.text), 'TRIGGER[[:space:]]*([[:alpha:]_]+)', 1, 1, NULL, 1)||'_RESTORED')
   
-  
-  
   End
   into
-  rec.text from dual;
+  rec.text 
+  from dual;
   End If;
 
 /**Append to Clob **/
@@ -88,8 +89,13 @@ begin
    
   end loop;
  v_clob:= v_start||v_clob;
-
-execute immediate v_clob;
+ 
+begin
+--execute immediate v_clob;
+ --   EXCEPTION        WHEN OTHERS THEN NULL;
+ 
+  DBMS_OUTPUT.PUT_LINE( v_clob);
+end;
 
 End;
 

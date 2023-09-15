@@ -70,6 +70,16 @@ End;
 
 /** HOW TO USE **/
 
+/**
+select *
+from (
+select to_char(rownum) as version,tstamp,type,name,owner
+from (select distinct tstamp,type,name,owner from plsql_history_source
+
+));
+
+**/
+
 ---set serveroutput on;
 ---begin
 

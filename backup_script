@@ -7,7 +7,7 @@ drop table plsql_history_source cascade constraints  purge;
 drop table plsql_log cascade constraints  purge;
 
 /** Creation of Objects Needed **/
-create table plsql_params as select 5 versions_kept from dual;
+create table plsql_params as select 10 versions_kept from dual;
 
 create table plsql_history (
    TSTAMP     TIMESTAMP

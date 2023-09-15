@@ -83,8 +83,8 @@ create table plsql_history (
         if l_tstamp_to_clear is not null then
           logger('Clearance timestamp for '||l_type||'-'||l_owner||'.'||l_name||' is '||l_tstamp_to_clear);
  
-         delete from plsql_history_source where tstamp <= l_tstamp_to_clear;
-          delete from plsql_history        where tstamp <= l_tstamp_to_clear;  
+         delete from plsql_history_source where tstamp <= l_tstamp_to_clear and owner=l_owner and type =l_type and name =l_name;
+          delete from plsql_history        where tstamp <= l_tstamp_to_clear and owner=l_owner and type =l_type and name =l_name;  
            logger('Cleared '||sql%rowcount||' versions for '||l_type||'-'||l_owner||'.'||l_name); 
            end if;  
            end if;  

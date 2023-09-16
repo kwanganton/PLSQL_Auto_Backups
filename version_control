@@ -1,0 +1,69 @@
+CREATE TABLE plsql_version_control (
+    version_number NUMBER,
+    object_name VARCHAR2(100),
+    object_type VARCHAR2(50),
+    timestamp TIMESTAMP,
+    description VARCHAR2(255),
+    username VARCHAR2(50),
+    old_code CLOB,
+    line_modified NUMBER,
+    code_modified CLOB
+);
+---------------------------------------------------------------------------------------------------------------------------------------------
+CREATE OR REPLACE TRIGGER plsql_version_control_trigger
+BEFORE CREATE OR ALTER OR DROP ON SCHEMA
+DECLARE
+    v_sql_text CLOB;
+    v_old_code CLOB;
+    v_line_modified NUMBER;
+BEGIN
+    -- Check if the object type is PL/SQL
+    IF ora_dict_obj_type IN ('PROCEDURE', 'FUNCTION', 'PACKAGE', 'PACKAGE BODY', 'TRIGGER') THEN
+        -- Retrieve the old code of the modified PL/SQL object
+        SELECT dbms_metadata.get_ddl(ora_dict_obj_type, ora_dict_obj_name)
+        INTO v_old_code
+        FROM dual;
+        
+        -- Retrieve the new code of the modified PL/SQL object
+        SELECT dbms_metadata.get_ddl(ora_dict_obj_type, ora_dict_obj_name)
+        INTO v_sql_text
+        FROM dual;
+
+        -- Determine the line number(s) where the code was modified
+        -- You may need to implement logic to find line differences between v_old_code and v_sql_text.
+        -- For simplicity, this example sets line_modified to 0.
+        v_line_modified := 0;
+        
+        -- Insert into the version control table
+        INSERT INTO plsql_version_control (version_number, object_name, object_type, timestamp, description, username, old_code, line_modified, code_modified)
+        VALUES (1, ora_dict_obj_name, ora_dict_obj_type, SYSTIMESTAMP, 'Updated ' || ora_dict_obj_type || ' ' || ora_dict_obj_name, USER, v_old_code, v_line_modified, v_sql_text);
+    END IF;
+END;
+/
+---------------------------------------------------------------------------------------------------------------------------------------------
+          SELECT * FROM plsql_version_control ORDER BY version_number;
+
+---------------------------------------------------------------------------------------------------------------------------------------------
+          DECLARE
+    v_object_name VARCHAR2(100) := 'my_procedure'; -- Replace with the object name you want to restore.
+    v_version_number NUMBER := 2; -- Replace with the desired version number.
+    v_sql_text CLOB;
+BEGIN
+    -- Retrieve the code for the specified object and version from the version control table.
+    SELECT modified_code
+    INTO v_sql_text
+    FROM plsql_version_control
+    WHERE object_name = v_object_name
+        AND version_number = v_version_number;
+    
+    -- Restore the PL/SQL object using the retrieved code.
+    EXECUTE IMMEDIATE v_sql_text;
+    
+    DBMS_OUTPUT.PUT_LINE('Object ' || v_object_name || ' restored to version ' || v_version_number);
+EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+        DBMS_OUTPUT.PUT_LINE('Version ' || v_version_number || ' of ' || v_object_name || ' not found in version control.');
+    WHEN OTHERS THEN
+        DBMS_OUTPUT.PUT_LINE('Error: ' || SQLERRM);
+END;
+/
